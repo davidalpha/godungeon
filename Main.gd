@@ -176,8 +176,9 @@ func place_pillars(room):
 func place_object(room):
 	var s = room.get_room_size_in_tiles(tile_size)
 	var room_center = room.get_room_pos_in_tiles(tile_size)
-	var x_pos = rand_range(room_center.x - s.x, room_center.x + s.x)
-	var y_pos = rand_range(room_center.y - s.y, room_center.y + s.y)
+	var x_pos = rand_range(room_center.x - s.x+2, room_center.x + s.x-2)
+	var y_pos = rand_range(room_center.y - s.y+2, room_center.y + s.y-2)
+	
 	Map.set_cell(x_pos, y_pos, 1)
 	
 				
