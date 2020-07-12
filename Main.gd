@@ -11,6 +11,8 @@ var min_size = 6  # minimum room size (in tiles)
 var max_size = 15  # maximum room size (in tiles)
 var hspread = 400  # horizontal spread (in pixels)
 var cull = 0.5  # chance to cull room
+var shape = 1 # chance of room being reshaped
+var decorated = 0.3 # shape of the room having decorations like fountains, statues or pillars
 
 var path  # AStar pathfinding object
 var start_room = null
@@ -146,8 +148,13 @@ func make_map():
 		for x in range(2, s.x * 2 - 1):
 			for y in range(2, s.y * 2 - 1):
 				Map.set_cell(ul.x + x, ul.y + y, 0)
-		place_pillars(room)
-		place_object(room)
+		
+		if randf() < shape:
+			round_room(room)
+		
+		if randf() < decorated:
+			place_decor(room)
+	
 		# Carve connecting corridor
 		var p = path.get_closest_point(Vector3(room.position.x, 
 											room.position.y, 0))
@@ -160,27 +167,62 @@ func make_map():
 				carve_path(start, end)
 		corridors.append(p)
 				
-
-func place_pillars(room):
+				
+func round_room(room):
 	var s = room.get_room_size_in_tiles(tile_size)
 	var room_center = room.get_room_pos_in_tiles(tile_size)
 	var upperleft = room_center - s
 	var bottomright = room_center + s
 	var upperright = Vector2(room_center.x + s.x, room_center.y - s.y)
 	var bottomleft = Vector2(room_center.x - s.x, room_center.y + s.y)
-	Map.set_cell(upperleft.x + 3, upperleft.y + 3, 1)
-	Map.set_cell(bottomright.x - 3, bottomright.y - 3, 1)
-	Map.set_cell(upperright.x - 3, upperleft.y + 3, 1)
-	Map.set_cell(bottomleft.x + 3, bottomright.y - 3, 1)
-	
+	var rx = floor((s.x*2) / 3)
+	var ry = floor((s.y*2) / 3)
+	var i = ry
+	if rx <= ry: 
+		i = rx
+	var g = i
+	for i in range(g,0,-1): 
+		Map.set_cell(upperleft.x + (g-(i-1)), upperleft.y + i, 1)
+		Map.set_cell(bottomright.x - (g-(i-1)), bottomright.y - i, 1)
+		Map.set_cell(upperright.x - (g-(i-1)), upperleft.y + i, 1)
+		Map.set_cell(bottomleft.x + (g-(i-1)), bottomright.y - i, 1)
+		for j in range(i,0,-1):
+			Map.set_cell(upperleft.x + j, upperleft.y + (i-(j-1)), 1)
+			Map.set_cell(bottomright.x - j, bottomright.y - (i-(j-1)), 1)
+			Map.set_cell(upperright.x - j, upperleft.y + (i-(j-1)), 1)
+			Map.set_cell(bottomleft.x + j, bottomright.y - (i-(j-1)), 1)
+
+
+func place_decor(room):
+	var s = room.get_room_size_in_tiles(tile_size)
+	var room_center = room.get_room_pos_in_tiles(tile_size)
+	var upperleft = room_center - s
+	var bottomright = room_center + s
+	var upperright = Vector2(room_center.x + s.x, room_center.y - s.y)
+	var bottomleft = Vector2(room_center.x - s.x, room_center.y + s.y)
+	var rx = floor((s.x*2) / 4)
+	var ry = floor((s.y*2) / 4)
+	Map.set_cell(upperleft.x + (rx+2), upperleft.y + (ry+2), 1)
+	Map.set_cell(bottomright.x - (rx+2), bottomright.y - (ry+2), 1)
+	Map.set_cell(upperright.x - (rx+2), upperleft.y + (ry+2), 1)
+	Map.set_cell(bottomleft.x + (rx+2), bottomright.y - (ry+2), 1)
+
+
 func place_object(room):
 	var s = room.get_room_size_in_tiles(tile_size)
 	var room_center = room.get_room_pos_in_tiles(tile_size)
 	var x_pos = rand_range(room_center.x - s.x+2, room_center.x + s.x-2)
 	var y_pos = rand_range(room_center.y - s.y+2, room_center.y + s.y-2)
 	
-	Map.set_cell(x_pos, y_pos, 1)
+	Map.set_cell(x_pos, y_pos, 2)
+	find_tile_locations(2)
 	
+func apply_autotile():
+	Map.update_bitmask_region()
+	
+func find_tile_locations(id):
+	var used_cells = Map.get_used_cells_by_id(id)
+	print(used_cells)
 				
 func carve_path(pos1, pos2):
 	# Carve a path between two points
