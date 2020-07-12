@@ -5,7 +5,7 @@ var Player = preload("res://Character.tscn")
 var font = preload("res://assets/RobotoBold120.tres")
 onready var Map = $TileMap
 
-var tile_size = 32  # size of a tile in the TileMap
+var tile_size = 16  # size of a tile in the TileMap
 var num_rooms = 20  # number of rooms to generate
 var min_size = 6  # minimum room size (in tiles)
 var max_size = 15  # maximum room size (in tiles)
