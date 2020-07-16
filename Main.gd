@@ -5,13 +5,13 @@ var Player = preload("res://Character.tscn")
 var font = preload("res://assets/RobotoBold120.tres")
 onready var Map = $TileMap
 
-var tile_size = 16  # size of a tile in the TileMap
+var tile_size = 32  # size of a tile in the TileMap
 var num_rooms = 20  # number of rooms to generate
 var min_size = 6  # minimum room size (in tiles)
 var max_size = 15  # maximum room size (in tiles)
 var hspread = 400  # horizontal spread (in pixels)
 var cull = 0.5  # chance to cull room
-var shape = 1 # chance of room being reshaped
+var shape = 0.6 # chance of room being reshaped
 var decorated = 0.3 # shape of the room having decorations like fountains, statues or pillars
 
 var path  # AStar pathfinding object
@@ -82,6 +82,8 @@ func _input(event):
 	if event.is_action_pressed('ui_focus_next'):
 		make_map()
 	if event.is_action_pressed('ui_cancel'):
+		Map.update_bitmask_region()
+		Map.fix_invalid_tiles()
 		player = Player.instance()
 		add_child(player)
 		player.position = start_room.position
@@ -137,7 +139,7 @@ func make_map():
 	var bottomright = Map.world_to_map(full_rect.end)
 	for x in range(topleft.x, bottomright.x):
 		for y in range(topleft.y, bottomright.y):
-			Map.set_cell(x, y, 1)	
+			Map.set_cell(x, y, -1)	
 	
 	# Carve rooms
 	var corridors = []  # One corridor per connection
@@ -154,6 +156,9 @@ func make_map():
 		
 		if randf() < decorated:
 			place_decor(room)
+			
+		Map.update_bitmask_region()
+		Map.fix_invalid_tiles()
 	
 		# Carve connecting corridor
 		var p = path.get_closest_point(Vector3(room.position.x, 
@@ -182,15 +187,16 @@ func round_room(room):
 		i = rx
 	var g = i
 	for i in range(g,0,-1): 
-		Map.set_cell(upperleft.x + (g-(i-1)), upperleft.y + i, 1)
-		Map.set_cell(bottomright.x - (g-(i-1)), bottomright.y - i, 1)
-		Map.set_cell(upperright.x - (g-(i-1)), upperleft.y + i, 1)
-		Map.set_cell(bottomleft.x + (g-(i-1)), bottomright.y - i, 1)
+		Map.set_cell(upperleft.x + (g-(i-1)), upperleft.y + i, -1)
+		Map.set_cell(bottomright.x - (g-(i-1)), bottomright.y - i, -1)
+		Map.set_cell(upperright.x - (g-(i-1)), upperleft.y + i, -1)
+		Map.set_cell(bottomleft.x + (g-(i-1)), bottomright.y - i, -1)
 		for j in range(i,0,-1):
-			Map.set_cell(upperleft.x + j, upperleft.y + (i-(j-1)), 1)
-			Map.set_cell(bottomright.x - j, bottomright.y - (i-(j-1)), 1)
-			Map.set_cell(upperright.x - j, upperleft.y + (i-(j-1)), 1)
-			Map.set_cell(bottomleft.x + j, bottomright.y - (i-(j-1)), 1)
+			Map.set_cell(upperleft.x + j, upperleft.y + (i-(j-1)), -1)
+			Map.set_cell(bottomright.x - j, bottomright.y - (i-(j-1)), -1)
+			Map.set_cell(upperright.x - j, upperleft.y + (i-(j-1)), -1)
+			Map.set_cell(bottomleft.x + j, bottomright.y - (i-(j-1)), -1)
+	apply_autotile()
 
 
 func place_decor(room):
@@ -202,10 +208,10 @@ func place_decor(room):
 	var bottomleft = Vector2(room_center.x - s.x, room_center.y + s.y)
 	var rx = floor((s.x*2) / 4)
 	var ry = floor((s.y*2) / 4)
-	Map.set_cell(upperleft.x + (rx+2), upperleft.y + (ry+2), 1)
-	Map.set_cell(bottomright.x - (rx+2), bottomright.y - (ry+2), 1)
-	Map.set_cell(upperright.x - (rx+2), upperleft.y + (ry+2), 1)
-	Map.set_cell(bottomleft.x + (rx+2), bottomright.y - (ry+2), 1)
+	Map.set_cell(upperleft.x + (rx+2), upperleft.y + (ry+2), -1)
+	Map.set_cell(bottomright.x - (rx+2), bottomright.y - (ry+2), -1)
+	Map.set_cell(upperright.x - (rx+2), upperleft.y + (ry+2), -1)
+	Map.set_cell(bottomleft.x + (rx+2), bottomright.y - (ry+2), -1)
 
 
 func place_object(room):
